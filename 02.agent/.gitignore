@@ -1,0 +1,18 @@
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+
+# Test/cache tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage output
+.coverage
+htmlcov/
+
+# OS/editor noise
+.DS_Store
+
+.venv
+.env
