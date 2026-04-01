@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from .functions import extract_title
 from .htmlnode import markdown_to_html_node
@@ -19,7 +20,7 @@ def copy_recursive(src_path, dst_path):
         dst_child = os.path.join(dst_path, entry)
         copy_recursive(src_child, dst_child)
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     if not os.path.exists(dest_dir_path):
         os.mkdir(dest_dir_path)
 
@@ -28,12 +29,12 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
         dst_path = os.path.join(dest_dir_path, entry)
 
         if os.path.isdir(src_path):
-            generate_pages_recursive(src_path, template_path, dst_path)
+            generate_pages_recursive(src_path, template_path, dst_path, basepath)
         elif os.path.isfile(src_path) and src_path.endswith(".md"):
             html_dest = os.path.splitext(dst_path)[0] + ".html"
-            generate_page(src_path, template_path, html_dest)
+            generate_page(src_path, template_path, html_dest, basepath)
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(
         f"Generating page from {from_path} to {dest_path} using {template_path}"
     )
@@ -49,6 +50,8 @@ def generate_page(from_path, template_path, dest_path):
 
     page = template.replace("{{ Title }}", title)
     page = page.replace("{{ Content }}", html_content)
+    page = page.replace('href="/', f'href="{basepath}')
+    page = page.replace('src="/', f'src="{basepath}')
 
     dest_dir = os.path.dirname(dest_path)
     if dest_dir:
@@ -58,18 +61,24 @@ def generate_page(from_path, template_path, dest_path):
         f.write(page)
 
 def main():
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
+    if not basepath.startswith("/"):
+        basepath = f"/{basepath}"
+    if not basepath.endswith("/"):
+        basepath = f"{basepath}/"
+
     project_root = os.path.dirname(os.path.dirname(__file__))
     static_dir = os.path.join(project_root, "static")
-    public_dir = os.path.join(project_root, "public")
+    docs_dir = os.path.join(project_root, "docs")
     content_dir = os.path.join(project_root, "content")
     template_path = os.path.join(project_root, "template.html")
 
-    if os.path.exists(public_dir):
-        shutil.rmtree(public_dir)
-    os.mkdir(public_dir)
+    if os.path.exists(docs_dir):
+        shutil.rmtree(docs_dir)
+    os.mkdir(docs_dir)
 
-    copy_recursive(static_dir, public_dir)
-    generate_pages_recursive(content_dir, template_path, public_dir)
+    copy_recursive(static_dir, docs_dir)
+    generate_pages_recursive(content_dir, template_path, docs_dir, basepath)
 
 if __name__ == "__main__":
     main()
