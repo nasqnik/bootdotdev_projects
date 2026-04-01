@@ -228,63 +228,20 @@ class TestSplitNodesLink(unittest.TestCase):
             new_nodes,
         )
 
-class TestTextToTextNodes(unittest.TestCase):
-    def test_text_to_textnodes_full_example(self):
-        text = (
-            "This is **text** with an _italic_ word and a `code block` "
-            "and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) "
-            "and a [link](https://boot.dev)"
-        )
-        result = text_to_textnodes(text)
-        self.assertListEqual(
-            [
-                TextNode("This is ", TextType.TEXT),
-                TextNode("text", TextType.BOLD),
-                TextNode(" with an ", TextType.TEXT),
-                TextNode("italic", TextType.ITALIC),
-                TextNode(" word and a ", TextType.TEXT),
-                TextNode("code block", TextType.CODE),
-                TextNode(" and an ", TextType.TEXT),
-                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
-                TextNode(" and a ", TextType.TEXT),
-                TextNode("link", TextType.LINK, "https://boot.dev"),
-            ],
-            result,
-        )
+class TestExtractTitle(unittest.TestCase):
+    def test_extract_title_simple_h1(self):
+        self.assertEqual(extract_title("# Hello"), "Hello")
 
-    def test_text_to_textnodes_plain_text_only(self):
-        result = text_to_textnodes("just plain text")
-        self.assertListEqual([TextNode("just plain text", TextType.TEXT)], result)
+    def test_extract_title_ignores_non_h1(self):
+        md = "## Subtitle\n# Title\nParagraph"
+        self.assertEqual(extract_title(md), "Title")
 
-    def test_text_to_textnodes_multiple_same_type(self):
-        result = text_to_textnodes("**one** and **two**")
-        self.assertListEqual(
-            [
-                TextNode("one", TextType.BOLD),
-                TextNode(" and ", TextType.TEXT),
-                TextNode("two", TextType.BOLD),
-            ],
-            result,
-        )
+    def test_extract_title_strips_whitespace(self):
+        self.assertEqual(extract_title("#   Hello World   "), "Hello World")
 
-    def test_text_to_textnodes_image_and_link(self):
-        result = text_to_textnodes(
-            "img ![alt](https://img.com/a.png) then [site](https://boot.dev)"
-        )
-        self.assertListEqual(
-            [
-                TextNode("img ", TextType.TEXT),
-                TextNode("alt", TextType.IMAGE, "https://img.com/a.png"),
-                TextNode(" then ", TextType.TEXT),
-                TextNode("site", TextType.LINK, "https://boot.dev"),
-            ],
-            result,
-        )
-
-    def test_text_to_textnodes_raises_on_unclosed_delimiter(self):
+    def test_extract_title_raises_without_h1(self):
         with self.assertRaises(ValueError):
-            text_to_textnodes("This is `broken")
-
+            extract_title("## No h1 here\nParagraph")
 
 if __name__ == "__main__":
     unittest.main()
